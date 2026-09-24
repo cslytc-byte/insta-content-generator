@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#121212" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>InstaCopy AI — Mobile Content Generator</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- CDN Libraries for Browser-Side Pre-Extraction (Saves Groq tokens) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <!-- Header / App Bar -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">📸</div>
+      <div>
+        <h1>InstaCopy <span class="badge">AI</span></h1>
+        <p class="subtitle">Human-style Instagram copy in 1-click</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="key-indicator" class="key-status-dot key-missing" title="Groq API Key Status"></span>
+    </div>
+  </header>
+
+  <!-- Main Views Container -->
+  <main class="app-main">
+    <!-- First-Time Onboarding Modal (Appears if key not saved) -->
+    <div id="key-modal" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-icon">🔑</span>
+          <h3>Welcome to InstaCopy!</h3>
+        </div>
+        <p class="modal-desc">Enter your Groq API key once. It will be securely saved on this phone so you never have to enter it again.</p>
+        <div class="form-group">
+          <input type="password" id="modal-api-key" placeholder="Paste gsk_... key here" autocomplete="off" />
+          <span class="key-hint">Need a key? Get one free at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a></span>
+        </div>
+        <button id="modal-save-btn" class="btn btn-primary btn-block">🚀 Save Key & Get Started</button>
+      </div>
+    </div>
+    <section id="tab-generator" class="tab-content active">
+      <!-- API Key Notice Banner if missing -->
+      <div id="missing-key-banner" class="notice-card" style="display: none;">
+        <div class="notice-icon">🔑</div>
+        <div class="notice-text">
+          <strong>Groq API Key Needed</strong>
+          <p>Add your key once in Settings to start generating.</p>
+        </div>
+        <button class="btn btn-sm btn-accent" onclick="switchTab('settings')">Setup</button>
+      </div>
+
+      <!-- Generator Input Card -->
+      <div class="card input-card">
+        <div class="card-header">
+          <span class="step-num">1</span>
+          <h2>Your Post Input</h2>
+        </div>
+        <p class="helper-text">Add text, upload an image / PDF / Excel, or do both. Any input works!</p>
+
+        <!-- Topic / Post Content Textarea -->
+        <div class="form-group">
+          <label for="post-topic">Post Topic / Raw Content <span class="optional">(Optional if file uploaded)</span></label>
+          <textarea
+            id="post-topic"
+            rows="3"
+            placeholder="e.g. 5 morning habits that doubled my energy as a busy founder, or paste any rough notes here..."
+          ></textarea>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="form-group">
+          <label>Attach File <span class="optional">(Image, PDF, Excel, CSV)</span></label>
+          <div class="file-dropzone" id="file-dropzone">
+            <input type="file" id="file-input" accept="image/*,.pdf,.xlsx,.xls,.csv,.txt" />
+            <div class="dropzone-content" id="dropzone-content">
+              <div class="dropzone-icon">📎</div>
+              <div class="dropzone-prompt">
+                <span class="dropzone-title">Upload or snap photo</span>
+                <span class="dropzone-sub">Images, PDF carousels, or Excel sheets</span>
+              </div>
+            </div>
+            <!-- File info badge (hidden by default) -->
+            <div class="file-badge" id="file-badge" style="display: none;">
+              <div class="file-badge-info">
+                <span id="file-icon" class="file-icon">📄</span>
+                <div>
+                  <span id="file-name" class="file-name">filename.png</span>
+                  <span id="file-status" class="file-status">Ready to extract</span>
+                </div>
+              </div>
+              <button type="button" id="remove-file-btn" class="btn-icon" title="Remove file">&times;</button>
+            </div>
+          </div>
+          <!-- Image thumbnail preview -->
+          <div id="image-preview-container" class="image-preview-wrapper" style="display: none;">
+            <img id="image-preview" src="" alt="Post image preview" />
+          </div>
+        </div>
+
+        <!-- Pre-extracted Text Drawer (Collapsible) -->
+        <div class="extracted-box" id="extracted-box" style="display: none;">
+          <div class="extracted-header" id="extracted-toggle">
+            <span>📝 Extracted Text from File (<span id="extracted-char-count">0</span> chars)</span>
+            <span class="toggle-arrow">▾</span>
+          </div>
+          <div class="extracted-body" id="extracted-body">
+            <p class="extracted-tip">This text will be sent to Groq instead of the raw file, saving your token limits.</p>
+            <textarea id="extracted-text" rows="3"></textarea>
+          </div>
+        </div>
+
+        <!-- Tone & Niche Selector -->
+        <div class="form-group">
+          <div class="label-with-action">
+            <label for="post-tone">Niche & Tone <span class="optional">(Optional)</span></label>
+            <span id="persona-applied-tag" class="persona-tag" style="display:none;">Persona Active</span>
+          </div>
+          <input
+            type="text"
+            id="post-tone"
+            placeholder="e.g. Fitness coach, punchy & witty (or leave blank to auto-guess)"
+          />
+          <!-- Quick Tone Chips -->
+          <div class="quick-chips">
+            <button type="button" class="chip" data-tone="Fitness coach, energetic & no-BS">💪 Fitness</button>
+            <button type="button" class="chip" data-tone="E-commerce & retail, high converting">🛍️ E-Commerce</button>
+            <button type="button" class="chip" data-tone="Personal brand, sharp & insightful">💼 Personal Brand</button>
+            <button type="button" class="chip" data-tone="Real estate, luxury & approachable">🏡 Real Estate</button>
+            <button type="button" class="chip" data-tone="Relatable, funny & conversational">😂 Relatable/Fun</button>
+            <button type="button" class="chip" data-tone="Tech & AI, clear & authoritative">⚡ Tech/SaaS</button>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button id="generate-btn" class="btn btn-primary btn-lg btn-block">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-label">Generate Instagram Content</span>
+        </button>
+        <p id="error-message" class="error-banner" style="display: none;"></p>
+      </div>
+
+      <!-- Loading / Progress Indicator -->
+      <div id="loading-card" class="card loading-card" style="display: none;">
+        <div class="spinner"></div>
+        <h3 id="loading-title">Generating your content...</h3>
+        <p id="loading-status" class="loading-sub">Processing input & calling Groq...</p>
+        <div class="progress-bar-container">
+          <div id="progress-bar" class="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Output Results Section -->
+      <div id="results-container" class="results-wrapper" style="display: none;">
+        <div class="results-header">
+          <h2>🎉 Your Ready-to-Publish Copy</h2>
+          <button id="copy-all-btn" class="btn btn-accent btn-sm">
+            <span>📋</span> Copy Everything
+          </button>
+        </div>
+
+        <!-- Section 1: 3 Captions -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-purple">1</span>
+              <h3>3 Caption Options</h3>
+            </div>
+            <span class="caption-note">Each with a scroll-stopping hook</span>
+          </div>
+
+          <!-- Caption 1 -->
+          <div class="caption-block">
+            <div class="caption-block-header">
+              <span class="option-label">Option 1 (Direct Hook)</span>
+              <button class="btn-copy-item" data-copy-target="caption-1-text">📋 Copy</button>
+            </div>
+            <div class="caption-text-content" id="caption-1-text"></div>
+          </div>
+
+          <!-- Caption 2 -->
+          <div class="caption-block">
+            <div class="caption-block-header">
+              <span class="option-label">Option 2 (Story / Value Hook)</span>
+              <button class="btn-copy-item" data-copy-target="caption-2-text">📋 Copy</button>
+            </div>
+            <div class="caption-text-content" id="caption-2-text"></div>
+          </div>
+
+          <!-- Caption 3 -->
+          <div class="caption-block">
+            <div class="caption-block-header">
+              <span class="option-label">Option 3 (Bold / Punchy Hook)</span>
+              <button class="btn-copy-item" data-copy-target="caption-3-text">📋 Copy</button>
+            </div>
+            <div class="caption-text-content" id="caption-3-text"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Hashtags -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-blue">2</span>
+              <h3>Hashtags (15-20)</h3>
+            </div>
+            <button class="btn-copy-item" data-copy-target="hashtags-text">📋 Copy Hashtags</button>
+          </div>
+          <p class="helper-text-sm">Strategic mix of broad and niche tags for maximum discoverability.</p>
+          <div class="copy-text-box" id="hashtags-text"></div>
+        </div>
+
+        <!-- Section 3: SEO Words -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-green">3</span>
+              <h3>Instagram SEO Keywords</h3>
+            </div>
+            <button class="btn-copy-item" data-copy-target="seo-text">📋 Copy SEO</button>
+          </div>
+          <p class="helper-text-sm">Natural, keyword-rich phrases for the Instagram search algorithm.</p>
+          <div class="copy-text-box" id="seo-text"></div>
+        </div>
+
+        <!-- Section 4: Pinned Comment -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-orange">4</span>
+              <h3>Pinned Comment</h3>
+            </div>
+            <button class="btn-copy-item" data-copy-target="pinned-comment-text">📋 Copy Comment</button>
+          </div>
+          <p class="helper-text-sm">Post this immediately after publishing to ignite comment interactions.</p>
+          <div class="copy-text-box" id="pinned-comment-text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PERSONALIZE & GUIDE -->
+    <section id="tab-personalize" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">✨</span>
+          <h2>Brand Persona & Guidelines</h2>
+        </div>
+        <p class="helper-text">Save your unique voice once. All generated captions will automatically align with this persona!</p>
+
+        <div class="form-group">
+          <label for="persona-niche">Your Core Niche / Industry</label>
+          <input type="text" id="persona-niche" placeholder="e.g. Online Fitness Coach for Busy Moms, Real Estate Agent in Austin" />
+        </div>
+
+        <div class="form-group">
+          <label for="persona-tone">Preferred Tone of Voice</label>
+          <input type="text" id="persona-tone" placeholder="e.g. Direct, high-energy, relatable, sharp, no jargon" />
+        </div>
+
+        <div class="form-group">
+          <label for="persona-audience">Target Audience</label>
+          <input type="text" id="persona-audience" placeholder="e.g. 25-45 year old career professionals wanting quick health tips" />
+        </div>
+
+        <div class="form-group">
+          <label for="persona-rules">Custom Do's & Don'ts / Signature Sign-off</label>
+          <textarea id="persona-rules" rows="3" placeholder="e.g. Always end with a question asking for saves. Never use words like 'crush it'. Always include 2 fire emojis."></textarea>
+        </div>
+
+        <div class="action-row">
+          <button id="save-persona-btn" class="btn btn-primary btn-block">💾 Save Persona</button>
+          <button id="clear-persona-btn" class="btn btn-outline">Reset</button>
+        </div>
+      </div>
+
+      <!-- Social Media Guide & Tips Assistant -->
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">💡</span>
+          <h2>Guide & Strategy Assistant</h2>
+        </div>
+        <p class="helper-text">Get instant expert advice, hook ideas, or tips from your Groq AI copywriter.</p>
+
+        <!-- Quick Strategy Prompt Chips -->
+        <div class="quick-chips guide-chips">
+          <button class="guide-chip" data-query="Give me 5 viral hook formulas for Instagram reels and carousels in my niche.">🎣 5 Hook Formulas</button>
+          <button class="guide-chip" data-query="What is the best Instagram posting strategy and carousel structure for high saves and shares?">📊 Best Posting Strategy</button>
+          <button class="guide-chip" data-query="How do I optimize my Instagram captions for Instagram's SEO search algorithm?">🔍 Instagram SEO Guide</button>
+          <button class="guide-chip" data-query="Give me 3 actionable tips to increase comments and engagement on my posts.">💬 Engagement Hacks</button>
+        </div>
+
+        <div class="form-group">
+          <label for="guide-input">Ask copywriter for tips or guide</label>
+          <div class="chat-input-row">
+            <input type="text" id="guide-input" placeholder="e.g. How do I write a punchy hook for a product drop?" />
+            <button id="guide-send-btn" class="btn btn-accent">Ask</button>
+          </div>
+        </div>
+
+        <div id="guide-response-card" class="guide-response-box" style="display:none;">
+          <div class="guide-response-header">
+            <span>💡 Copywriter Advice</span>
+            <button class="btn-copy-item" data-copy-target="guide-response-text">📋 Copy</button>
+          </div>
+          <div id="guide-response-text" class="guide-response-content"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SETTINGS -->
+    <section id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">⚙️</span>
+          <h2>Groq API Settings</h2>
+        </div>
+        <p class="helper-text">Saved permanently in your phone's browser (`localStorage`). Never have to enter it again!</p>
+
+        <div class="form-group">
+          <label for="groq-api-key">Groq API Key</label>
+          <div class="password-input-row">
+            <input type="password" id="groq-api-key" placeholder="gsk_..." autocomplete="off" />
+            <button type="button" id="toggle-key-visibility" class="btn btn-outline btn-sm">👁️</button>
+          </div>
+          <span class="key-hint">Get a free key from <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="groq-model-select">Groq Model</label>
+          <select id="groq-model-select">
+            <option value="llama-3.1-8b-instant" selected>llama-3.1-8b-instant (Fastest & Universal Free Access)</option>
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (High Quality 70B)</option>
+            <option value="gemma2-9b-it">gemma2-9b-it (Google Gemma 2)</option>
+            <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b (DeepSeek R1)</option>
+          </select>
+          <span class="key-hint">Automatic fallback is active: if a model returns a 404, it automatically switches to a working model seamlessly.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="switch-label">
+            <input type="checkbox" id="auto-fallback-toggle" checked />
+            <span>Enable Auto-Fallback on 404 errors</span>
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="save-key-btn" class="btn btn-primary">Save Key & Test</button>
+          <button id="clear-key-btn" class="btn btn-danger">Clear Key</button>
+        </div>
+
+        <div id="key-test-result" class="status-box" style="display: none;"></div>
+      </div>
+
+      <!-- About & Mobile App Info Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">📱</span>
+          <h2>One-Click Mobile Access</h2>
+        </div>
+        <div class="mobile-tips">
+          <p><strong>To install on iPhone:</strong> Open this page in Safari, tap the <strong>Share</strong> button (box with arrow), and select <strong>"Add to Home Screen"</strong>.</p>
+          <p><strong>To install on Android:</strong> Open in Chrome, tap the <strong>three dots menu (⋮)</strong>, and select <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</p>
+          <p><strong>Save Tokens:</strong> OCR and file parsing happen 100% on your device, passing only clean extracted text to Groq!</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation Bar (Mobile Native Style) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="generator">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">Generator</span>
+    </button>
+    <button class="nav-item" data-tab="personalize">
+      <span class="nav-icon">✨</span>
+      <span class="nav-label">Personalize</span>
+    </button>
+    <button class="nav-item" data-tab="settings">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Floating Toast Notification for Copying -->
+  <div id="toast" class="toast">Copied to clipboard!</div>
+
+  <!-- Main Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

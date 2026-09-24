@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#121212" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>InstaCopy AI — Mobile Content Generator</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+/* Reset & Global Mobile-First Styles */
+:root {
+  --bg-color: #0f1115;
+  --card-bg: #181b21;
+  --card-border: #282d37;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --primary-gradient: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+  --accent-purple: #9333ea;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --danger-color: #ef4444;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.5;
+  padding-bottom: calc(75px + var(--safe-bottom));
+  max-width: 540px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* App Header */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(15, 17, 21, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  font-size: 28px;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand h1 {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  background: var(--primary-gradient);
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.key-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.key-saved {
+  background-color: var(--accent-green);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.key-missing {
+  background-color: var(--accent-orange);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+/* Main Container & Tabs */
+.app-main {
+  padding: 16px;
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards & Containers */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.card-header h2 {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.helper-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.helper-text-sm {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #e5e7eb;
+}
+
+.optional {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.label-with-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.persona-tag {
+  background: rgba(147, 51, 234, 0.2);
+  color: #c084fc;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid rgba(147, 51, 234, 0.4);
+}
+
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  background: #111317;
+  border: 1px solid #2d333f;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #e1306c;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* File Upload Dropzone */
+.file-dropzone {
+  position: relative;
+  background: #111317;
+  border: 2px dashed #2d333f;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-dropzone:hover,
+.file-dropzone.dragover {
+  border-color: #e1306c;
+  background: rgba(225, 48, 108, 0.04);
+}
+
+.file-dropzone input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dropzone-icon {
+  font-size: 24px;
+}
+
+.dropzone-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.dropzone-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.file-badge {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e232c;
+  border: 1px solid #374151;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.file-badge-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.file-icon {
+  font-size: 20px;
+}
+
+.file-name {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 230px;
+}
+
+.file-status {
+  font-size: 11px;
+  color: var(--accent-green);
+  display: block;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  z-index: 10;
+}
+
+.btn-icon:hover {
+  color: var(--danger-color);
+}
+
+.image-preview-wrapper {
+  margin-top: 10px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  max-height: 180px;
+  display: flex;
+  justify-content: center;
+  background: #000;
+  border: 1px solid var(--card-border);
+}
+
+.image-preview-wrapper img {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+/* Extracted Text Drawer */
+.extracted-box {
+  background: #11141a;
+  border: 1px solid #232833;
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.extracted-header {
+  padding: 8px 12px;
+  background: #171b23;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: #93c5fd;
+}
+
+.extracted-body {
+  padding: 10px 12px;
+}
+
+.extracted-tip {
+  font-size: 11px;
+  color: var(--accent-green);
+  margin-bottom: 6px;
+}
+
+.extracted-body textarea {
+  font-size: 12px;
+  font-family: monospace;
+}
+
+/* Quick Chips */
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.chip {
+  background: #202530;
+  border: 1px solid #2e3545;
+  border-radius: 20px;
+  color: #d1d5db;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chip:active,
+.chip.active {
+  background: var(--accent-purple);
+  color: #fff;
+  border-color: var(--accent-purple);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-lg {
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(225, 48, 108, 0.35);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-accent {
+  background: #9333ea;
+  color: #ffffff;
+}
+
+.btn-accent:active {
+  background: #7e22ce;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text-main);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Password Input with eye */
+.password-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.key-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+.key-hint a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+/* Loading Card */
+.loading-card {
+  text-align: center;
+  padding: 32px 20px;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #e1306c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: #202530;
+  border-radius: 4px;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  width: 20%;
+  height: 100%;
+  background: var(--primary-gradient);
+  transition: width 0.3s ease;
+}
+
+/* Results Section */
+.results-wrapper {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.results-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.result-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.title-with-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-with-pill h3 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pill {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.pill-purple { background: var(--accent-purple); }
+.pill-blue { background: var(--accent-blue); }
+.pill-green { background: var(--accent-green); }
+.pill-orange { background: var(--accent-orange); }
+
+.caption-note {
+  font-size: 11px;
+  color: var(--accent-green);
+}
+
+.caption-block {
+  background: #11141a;
+  border: 1px solid #232833;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.caption-block:last-child {
+  margin-bottom: 0;
+}
+
+.caption-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #202532;
+  padding-bottom: 6px;
+}
+
+.option-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.caption-text-content {
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.caption-hook {
+  font-weight: 700;
+  color: #ffffff;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.copy-text-box {
+  background: #11141a;
+  border: 1px solid #232833;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.btn-copy-item {
+  background: #232936;
+  border: 1px solid #323a4d;
+  color: #e5e7eb;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-copy-item:active {
+  background: var(--accent-green);
+  color: #fff;
+}
+
+/* Notice & Error Banners */
+.notice-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.notice-icon {
+  font-size: 24px;
+}
+
+.notice-text strong {
+  font-size: 13px;
+  color: #fbbf24;
+  display: block;
+}
+
+.notice-text p {
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.error-banner {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+}
+
+.status-box {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+}
+
+.status-success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.status-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+/* Guide Assistant */
+.guide-chips {
+  margin-bottom: 14px;
+}
+
+.guide-chip {
+  background: #1c212b;
+  border: 1px solid #2d3545;
+  color: #93c5fd;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.guide-chip:active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.guide-response-box {
+  margin-top: 14px;
+  background: #11141a;
+  border: 1px solid #273042;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.guide-response-header {
+  padding: 8px 12px;
+  background: #19202c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.guide-response-content {
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Mobile Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 540px;
+  margin: 0 auto;
+  background: rgba(18, 20, 26, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 calc(8px + var(--safe-bottom));
+  z-index: 100;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 16px;
+  transition: color 0.15s;
+}
+
+.nav-item.active {
+  color: #e1306c;
+}
+
+.nav-icon {
+  font-size: 20px;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 85px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #10b981;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 200;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Switch */
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.switch-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #e1306c;
+}
+
+.mobile-tips {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.mobile-tips p {
+  margin-bottom: 8px;
+}
+
+/* Onboarding Key Modal */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 999;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  background: #181b21;
+  border: 1px solid #374151;
+  border-radius: var(--radius-md);
+  padding: 24px 20px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.modal-icon {
+  font-size: 26px;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.modal-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+</style>
+  <!-- CDN Libraries for Browser-Side Pre-Extraction (Saves Groq tokens) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <!-- Header / App Bar -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">📸</div>
+      <div>
+        <h1>InstaCopy <span class="badge">AI</span></h1>
+        <p class="subtitle">Human-style Instagram copy in 1-click</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="key-indicator" class="key-status-dot key-missing" title="Groq API Key Status"></span>
+    </div>
+  </header>
+
+  <!-- Main Views Container -->
+  <main class="app-main">
+    <!-- First-Time Onboarding Modal (Appears if key not saved) -->
+    <div id="key-modal" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <span class="modal-icon">🔑</span>
+          <h3>Welcome to InstaCopy!</h3>
+        </div>
+        <p class="modal-desc">Enter your Groq API key once. It will be securely saved on this phone so you never have to enter it again.</p>
+        <div class="form-group">
+          <input type="password" id="modal-api-key" placeholder="Paste gsk_... key here" autocomplete="off" />
+          <span class="key-hint">Need a key? Get one free at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a></span>
+        </div>
+        <button id="modal-save-btn" class="btn btn-primary btn-block">🚀 Save Key & Get Started</button>
+      </div>
+    </div>
+    <section id="tab-generator" class="tab-content active">
+      <!-- API Key Notice Banner if missing -->
+      <div id="missing-key-banner" class="notice-card" style="display: none;">
+        <div class="notice-icon">🔑</div>
+        <div class="notice-text">
+          <strong>Groq API Key Needed</strong>
+          <p>Add your key once in Settings to start generating.</p>
+        </div>
+        <button class="btn btn-sm btn-accent" onclick="switchTab('settings')">Setup</button>
+      </div>
+
+      <!-- Generator Input Card -->
+      <div class="card input-card">
+        <div class="card-header">
+          <span class="step-num">1</span>
+          <h2>Your Post Input</h2>
+        </div>
+        <p class="helper-text">Add text, upload an image / PDF / Excel, or do both. Any input works!</p>
+
+        <!-- Topic / Post Content Textarea -->
+        <div class="form-group">
+          <label for="post-topic">Post Topic / Raw Content <span class="optional">(Optional if file uploaded)</span></label>
+          <textarea
+            id="post-topic"
+            rows="3"
+            placeholder="e.g. 5 morning habits that doubled my energy as a busy founder, or paste any rough notes here..."
+          ></textarea>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="form-group">
+          <label>Attach File <span class="optional">(Image, PDF, Excel, CSV)</span></label>
+          <div class="file-dropzone" id="file-dropzone">
+            <input type="file" id="file-input" accept="image/*,.pdf,.xlsx,.xls,.csv,.txt" />
+            <div class="dropzone-content" id="dropzone-content">
+              <div class="dropzone-icon">📎</div>
+              <div class="dropzone-prompt">
+                <span class="dropzone-title">Upload or snap photo</span>
+                <span class="dropzone-sub">Images, PDF carousels, or Excel sheets</span>
+              </div>
+            </div>
+            <!-- File info badge (hidden by default) -->
+            <div class="file-badge" id="file-badge" style="display: none;">
+              <div class="file-badge-info">
+                <span id="file-icon" class="file-icon">📄</span>
+                <div>
+                  <span id="file-name" class="file-name">filename.png</span>
+                  <span id="file-status" class="file-status">Ready to extract</span>
+                </div>
+              </div>
+              <button type="button" id="remove-file-btn" class="btn-icon" title="Remove file">&times;</button>
+            </div>
+          </div>
+          <!-- Image thumbnail preview -->
+          <div id="image-preview-container" class="image-preview-wrapper" style="display: none;">
+            <img id="image-preview" src="" alt="Post image preview" />
+          </div>
+        </div>
+
+        <!-- Pre-extracted Text Drawer (Collapsible) -->
+        <div class="extracted-box" id="extracted-box" style="display: none;">
+          <div class="extracted-header" id="extracted-toggle">
+            <span>📝 Extracted Text from File (<span id="extracted-char-count">0</span> chars)</span>
+            <span class="toggle-arrow">▾</span>
+          </div>
+          <div class="extracted-body" id="extracted-body">
+            <p class="extracted-tip">This text will be sent to Groq instead of the raw file, saving your token limits.</p>
+            <textarea id="extracted-text" rows="3"></textarea>
+          </div>
+        </div>
+
+        <!-- Tone & Niche Selector -->
+        <div class="form-group">
+          <div class="label-with-action">
+            <label for="post-tone">Niche & Tone <span class="optional">(Optional)</span></label>
+            <span id="persona-applied-tag" class="persona-tag" style="display:none;">Persona Active</span>
+          </div>
+          <input
+            type="text"
+            id="post-tone"
+            placeholder="e.g. Fitness coach, punchy & witty (or leave blank to auto-guess)"
+          />
+          <!-- Quick Tone Chips -->
+          <div class="quick-chips">
+            <button type="button" class="chip" data-tone="Fitness coach, energetic & no-BS">💪 Fitness</button>
+            <button type="button" class="chip" data-tone="E-commerce & retail, high converting">🛍️ E-Commerce</button>
+            <button type="button" class="chip" data-tone="Personal brand, sharp & insightful">💼 Personal Brand</button>
+            <button type="button" class="chip" data-tone="Real estate, luxury & approachable">🏡 Real Estate</button>
+            <button type="button" class="chip" data-tone="Relatable, funny & conversational">😂 Relatable/Fun</button>
+            <button type="button" class="chip" data-tone="Tech & AI, clear & authoritative">⚡ Tech/SaaS</button>
+          </div>
+        </div>
+
+        <!-- Generate Button -->
+        <button id="generate-btn" class="btn btn-primary btn-lg btn-block">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-label">Generate Instagram Content</span>
+        </button>
+        <p id="error-message" class="error-banner" style="display: none;"></p>
+      </div>
+
+      <!-- Loading / Progress Indicator -->
+      <div id="loading-card" class="card loading-card" style="display: none;">
+        <div class="spinner"></div>
+        <h3 id="loading-title">Generating your content...</h3>
+        <p id="loading-status" class="loading-sub">Processing input & calling Groq...</p>
+        <div class="progress-bar-container">
+          <div id="progress-bar" class="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Output Results Section -->
+      <div id="results-container" class="results-wrapper" style="display: none;">
+        <div class="results-header">
+          <h2>🎉 Your Ready-to-Publish Copy</h2>
+          <button id="copy-all-btn" class="btn btn-accent btn-sm">
+            <span>📋</span> Copy Everything
+          </button>
+        </div>
+
+        <!-- Section 1: 3 Captions -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-purple">1</span>
+              <h3>3 Caption Options</h3>
+            </div>
+            <span class="caption-note">Each with a scroll-stopping hook</span>
+          </div>
+
+          <!-- Caption 1 -->
+          <div class="caption-block">
+            <div class="caption-block-header">
+              <span class="option-label">Option 1 (Direct Hook)</span>
+              <button class="btn-copy-item" data-copy-target="caption-1-text">📋 Copy</button>
+            </div>
+            <div class="caption-text-content" id="caption-1-text"></div>
+          </div>
+
+          <!-- Caption 2 -->
+          <div class="caption-block">
+            <div class="caption-block-header">
+              <span class="option-label">Option 2 (Story / Value Hook)</span>
+              <button class="btn-copy-item" data-copy-target="caption-2-text">📋 Copy</button>
+            </div>
+            <div class="caption-text-content" id="caption-2-text"></div>
+          </div>
+
+          <!-- Caption 3 -->
+          <div class="caption-block">
+            <div class="caption-block-header">
+              <span class="option-label">Option 3 (Bold / Punchy Hook)</span>
+              <button class="btn-copy-item" data-copy-target="caption-3-text">📋 Copy</button>
+            </div>
+            <div class="caption-text-content" id="caption-3-text"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Hashtags -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-blue">2</span>
+              <h3>Hashtags (15-20)</h3>
+            </div>
+            <button class="btn-copy-item" data-copy-target="hashtags-text">📋 Copy Hashtags</button>
+          </div>
+          <p class="helper-text-sm">Strategic mix of broad and niche tags for maximum discoverability.</p>
+          <div class="copy-text-box" id="hashtags-text"></div>
+        </div>
+
+        <!-- Section 3: SEO Words -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-green">3</span>
+              <h3>Instagram SEO Keywords</h3>
+            </div>
+            <button class="btn-copy-item" data-copy-target="seo-text">📋 Copy SEO</button>
+          </div>
+          <p class="helper-text-sm">Natural, keyword-rich phrases for the Instagram search algorithm.</p>
+          <div class="copy-text-box" id="seo-text"></div>
+        </div>
+
+        <!-- Section 4: Pinned Comment -->
+        <div class="result-card">
+          <div class="result-card-header">
+            <div class="title-with-pill">
+              <span class="pill pill-orange">4</span>
+              <h3>Pinned Comment</h3>
+            </div>
+            <button class="btn-copy-item" data-copy-target="pinned-comment-text">📋 Copy Comment</button>
+          </div>
+          <p class="helper-text-sm">Post this immediately after publishing to ignite comment interactions.</p>
+          <div class="copy-text-box" id="pinned-comment-text"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PERSONALIZE & GUIDE -->
+    <section id="tab-personalize" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">✨</span>
+          <h2>Brand Persona & Guidelines</h2>
+        </div>
+        <p class="helper-text">Save your unique voice once. All generated captions will automatically align with this persona!</p>
+
+        <div class="form-group">
+          <label for="persona-niche">Your Core Niche / Industry</label>
+          <input type="text" id="persona-niche" placeholder="e.g. Online Fitness Coach for Busy Moms, Real Estate Agent in Austin" />
+        </div>
+
+        <div class="form-group">
+          <label for="persona-tone">Preferred Tone of Voice</label>
+          <input type="text" id="persona-tone" placeholder="e.g. Direct, high-energy, relatable, sharp, no jargon" />
+        </div>
+
+        <div class="form-group">
+          <label for="persona-audience">Target Audience</label>
+          <input type="text" id="persona-audience" placeholder="e.g. 25-45 year old career professionals wanting quick health tips" />
+        </div>
+
+        <div class="form-group">
+          <label for="persona-rules">Custom Do's & Don'ts / Signature Sign-off</label>
+          <textarea id="persona-rules" rows="3" placeholder="e.g. Always end with a question asking for saves. Never use words like 'crush it'. Always include 2 fire emojis."></textarea>
+        </div>
+
+        <div class="action-row">
+          <button id="save-persona-btn" class="btn btn-primary btn-block">💾 Save Persona</button>
+          <button id="clear-persona-btn" class="btn btn-outline">Reset</button>
+        </div>
+      </div>
+
+      <!-- Social Media Guide & Tips Assistant -->
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">💡</span>
+          <h2>Guide & Strategy Assistant</h2>
+        </div>
+        <p class="helper-text">Get instant expert advice, hook ideas, or tips from your Groq AI copywriter.</p>
+
+        <!-- Quick Strategy Prompt Chips -->
+        <div class="quick-chips guide-chips">
+          <button class="guide-chip" data-query="Give me 5 viral hook formulas for Instagram reels and carousels in my niche.">🎣 5 Hook Formulas</button>
+          <button class="guide-chip" data-query="What is the best Instagram posting strategy and carousel structure for high saves and shares?">📊 Best Posting Strategy</button>
+          <button class="guide-chip" data-query="How do I optimize my Instagram captions for Instagram's SEO search algorithm?">🔍 Instagram SEO Guide</button>
+          <button class="guide-chip" data-query="Give me 3 actionable tips to increase comments and engagement on my posts.">💬 Engagement Hacks</button>
+        </div>
+
+        <div class="form-group">
+          <label for="guide-input">Ask copywriter for tips or guide</label>
+          <div class="chat-input-row">
+            <input type="text" id="guide-input" placeholder="e.g. How do I write a punchy hook for a product drop?" />
+            <button id="guide-send-btn" class="btn btn-accent">Ask</button>
+          </div>
+        </div>
+
+        <div id="guide-response-card" class="guide-response-box" style="display:none;">
+          <div class="guide-response-header">
+            <span>💡 Copywriter Advice</span>
+            <button class="btn-copy-item" data-copy-target="guide-response-text">📋 Copy</button>
+          </div>
+          <div id="guide-response-text" class="guide-response-content"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SETTINGS -->
+    <section id="tab-settings" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">⚙️</span>
+          <h2>Groq API Settings</h2>
+        </div>
+        <p class="helper-text">Saved permanently in your phone's browser (`localStorage`). Never have to enter it again!</p>
+
+        <div class="form-group">
+          <label for="groq-api-key">Groq API Key</label>
+          <div class="password-input-row">
+            <input type="password" id="groq-api-key" placeholder="gsk_..." autocomplete="off" />
+            <button type="button" id="toggle-key-visibility" class="btn btn-outline btn-sm">👁️</button>
+          </div>
+          <span class="key-hint">Get a free key from <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="groq-model-select">Groq Model</label>
+          <select id="groq-model-select">
+            <option value="llama-3.1-8b-instant" selected>llama-3.1-8b-instant (Fastest & Universal Free Access)</option>
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (High Quality 70B)</option>
+            <option value="gemma2-9b-it">gemma2-9b-it (Google Gemma 2)</option>
+            <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b (DeepSeek R1)</option>
+          </select>
+          <span class="key-hint">Automatic fallback is active: if a model returns a 404, it automatically switches to a working model seamlessly.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="switch-label">
+            <input type="checkbox" id="auto-fallback-toggle" checked />
+            <span>Enable Auto-Fallback on 404 errors</span>
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="save-key-btn" class="btn btn-primary">Save Key & Test</button>
+          <button id="clear-key-btn" class="btn btn-danger">Clear Key</button>
+        </div>
+
+        <div id="key-test-result" class="status-box" style="display: none;"></div>
+      </div>
+
+      <!-- About & Mobile App Info Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="step-num">📱</span>
+          <h2>One-Click Mobile Access</h2>
+        </div>
+        <div class="mobile-tips">
+          <p><strong>To install on iPhone:</strong> Open this page in Safari, tap the <strong>Share</strong> button (box with arrow), and select <strong>"Add to Home Screen"</strong>.</p>
+          <p><strong>To install on Android:</strong> Open in Chrome, tap the <strong>three dots menu (⋮)</strong>, and select <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</p>
+          <p><strong>Save Tokens:</strong> OCR and file parsing happen 100% on your device, passing only clean extracted text to Groq!</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation Bar (Mobile Native Style) -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="generator">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-label">Generator</span>
+    </button>
+    <button class="nav-item" data-tab="personalize">
+      <span class="nav-icon">✨</span>
+      <span class="nav-label">Personalize</span>
+    </button>
+    <button class="nav-item" data-tab="settings">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Floating Toast Notification for Copying -->
+  <div id="toast" class="toast">Copied to clipboard!</div>
+
+  <!-- Main Application Logic -->
+  <script>
+/**
+ * InstaCopy AI — Mobile Instagram Text Content Generator
+ * Client-side text extraction (OCR, PDF, Excel) + Groq API with automatic model fallback.
+ */
+
+// --- Constants & Config ---
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models";
+
+const DEFAULT_MODELS = [
+  "llama-3.1-8b-instant",
+  "llama-3.3-70b-versatile",
+  "gemma2-9b-it",
+  "deepseek-r1-distill-llama-70b"
+];
+
+// Sanitize saved model if it contains decommissioned models
+let initialModel = localStorage.getItem("instacopy_model") || "llama-3.1-8b-instant";
+if (initialModel.includes("mixtral") || initialModel.includes("llama3-")) {
+  initialModel = "llama-3.1-8b-instant";
+  localStorage.setItem("instacopy_model", initialModel);
+}
+
+// --- Application State ---
+const state = {
+  apiKey: localStorage.getItem("instacopy_groq_key") || "",
+  selectedModel: initialModel,
+  autoFallback: localStorage.getItem("instacopy_fallback") !== "false",
+  currentFile: null,
+  extractedText: "",
+  persona: JSON.parse(localStorage.getItem("instacopy_persona") || "{}")
+};
+
+// --- DOM Elements ---
+const dom = {
+  // Navigation
+  navButtons: document.querySelectorAll(".bottom-nav .nav-item"),
+  tabs: document.querySelectorAll(".tab-content"),
+  keyIndicator: document.getElementById("key-indicator"),
+  missingKeyBanner: document.getElementById("missing-key-banner"),
+
+  // Generator inputs
+  postTopic: document.getElementById("post-topic"),
+  postTone: document.getElementById("post-tone"),
+  toneChips: document.querySelectorAll(".quick-chips .chip"),
+  personaTag: document.getElementById("persona-applied-tag"),
+  generateBtn: document.getElementById("generate-btn"),
+  errorMsg: document.getElementById("error-message"),
+
+  // File dropzone
+  fileInput: document.getElementById("file-input"),
+  fileDropzone: document.getElementById("file-dropzone"),
+  dropzoneContent: document.getElementById("dropzone-content"),
+  fileBadge: document.getElementById("file-badge"),
+  fileName: document.getElementById("file-name"),
+  fileStatus: document.getElementById("file-status"),
+  fileIcon: document.getElementById("file-icon"),
+  removeFileBtn: document.getElementById("remove-file-btn"),
+  imagePreviewContainer: document.getElementById("image-preview-container"),
+  imagePreview: document.getElementById("image-preview"),
+
+  // Extracted text box
+  extractedBox: document.getElementById("extracted-box"),
+  extractedToggle: document.getElementById("extracted-toggle"),
+  extractedBody: document.getElementById("extracted-body"),
+  extractedText: document.getElementById("extracted-text"),
+  extractedCharCount: document.getElementById("extracted-char-count"),
+
+  // Loading
+  loadingCard: document.getElementById("loading-card"),
+  loadingTitle: document.getElementById("loading-title"),
+  loadingStatus: document.getElementById("loading-status"),
+  progressBar: document.getElementById("progress-bar"),
+
+  // Results
+  resultsContainer: document.getElementById("results-container"),
+  copyAllBtn: document.getElementById("copy-all-btn"),
+  caption1: document.getElementById("caption-1-text"),
+  caption2: document.getElementById("caption-2-text"),
+  caption3: document.getElementById("caption-3-text"),
+  hashtagsText: document.getElementById("hashtags-text"),
+  seoText: document.getElementById("seo-text"),
+  pinnedComment: document.getElementById("pinned-comment-text"),
+
+  // Personalize Tab
+  personaNiche: document.getElementById("persona-niche"),
+  personaTone: document.getElementById("persona-tone"),
+  personaAudience: document.getElementById("persona-audience"),
+  personaRules: document.getElementById("persona-rules"),
+  savePersonaBtn: document.getElementById("save-persona-btn"),
+  clearPersonaBtn: document.getElementById("clear-persona-btn"),
+
+  // Guide Assistant
+  guideInput: document.getElementById("guide-input"),
+  guideSendBtn: document.getElementById("guide-send-btn"),
+  guideChips: document.querySelectorAll(".guide-chip"),
+  guideResponseCard: document.getElementById("guide-response-card"),
+  guideResponseText: document.getElementById("guide-response-text"),
+
+  // Settings Tab
+  apiKeyInput: document.getElementById("groq-api-key"),
+  toggleKeyVisBtn: document.getElementById("toggle-key-visibility"),
+  modelSelect: document.getElementById("groq-model-select"),
+  autoFallbackToggle: document.getElementById("auto-fallback-toggle"),
+  saveKeyBtn: document.getElementById("save-key-btn"),
+  clearKeyBtn: document.getElementById("clear-key-btn"),
+  keyTestResult: document.getElementById("key-test-result"),
+
+  // Onboarding Modal
+  keyModal: document.getElementById("key-modal"),
+  modalApiKey: document.getElementById("modal-api-key"),
+  modalSaveBtn: document.getElementById("modal-save-btn"),
+
+  // Toast
+  toast: document.getElementById("toast")
+};
+
+// --- Initialization ---
+document.addEventListener("DOMContentLoaded", () => {
+  setupNavigation();
+  setupSettingsUI();
+  setupPersonalizeUI();
+  setupFileUploadHandlers();
+  setupToneChips();
+  setupCopyButtons();
+  setupGuideAssistant();
+  setupGeneratorEvents();
+  setupOnboardingModal();
+  updateKeyStatusDisplay();
+});
+
+// --- Tab Navigation ---
+function switchTab(tabId) {
+  dom.tabs.forEach(tab => {
+    tab.classList.toggle("active", tab.id === `tab-${tabId}`);
+  });
+  dom.navButtons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tabId);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function setupNavigation() {
+  dom.navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      switchTab(btn.dataset.tab);
+    });
+  });
+}
+
+// --- Onboarding Modal Logic ---
+function setupOnboardingModal() {
+  if (!state.apiKey.trim()) {
+    dom.keyModal.style.display = "flex";
+  }
+
+  dom.modalSaveBtn.addEventListener("click", () => {
+    const key = dom.modalApiKey.value.trim();
+    if (!key) {
+      alert("Please paste your Groq API key (starts with gsk_)");
+      return;
+    }
+    state.apiKey = key;
+    localStorage.setItem("instacopy_groq_key", key);
+    dom.apiKeyInput.value = key;
+    dom.keyModal.style.display = "none";
+    updateKeyStatusDisplay();
+    showToast("Key Saved Permanently! Ready to create.");
+  });
+}
+
+// --- Key Management & Status ---
+function updateKeyStatusDisplay() {
+  const hasKey = !!state.apiKey.trim();
+  if (hasKey) {
+    dom.keyIndicator.className = "key-status-dot key-saved";
+    dom.keyIndicator.title = "Groq API Key Active";
+    dom.missingKeyBanner.style.display = "none";
+  } else {
+    dom.keyIndicator.className = "key-status-dot key-missing";
+    dom.keyIndicator.title = "Groq API Key Required";
+    dom.missingKeyBanner.style.display = "flex";
+  }
+}
+
+function setupSettingsUI() {
+  dom.apiKeyInput.value = state.apiKey;
+  dom.modelSelect.value = state.selectedModel;
+  dom.autoFallbackToggle.checked = state.autoFallback;
+
+  dom.toggleKeyVisBtn.addEventListener("click", () => {
+    const isPassword = dom.apiKeyInput.type === "password";
+    dom.apiKeyInput.type = isPassword ? "text" : "password";
+    dom.toggleKeyVisBtn.textContent = isPassword ? "🙈" : "👁️";
+  });
+
+  dom.saveKeyBtn.addEventListener("click", async () => {
+    const key = dom.apiKeyInput.value.trim();
+    if (!key) {
+      showTestResult("Please enter a valid Groq API key.", false);
+      return;
+    }
+
+    dom.saveKeyBtn.disabled = true;
+    dom.saveKeyBtn.textContent = "Testing Key...";
+    showTestResult("Verifying connection to Groq API...", null);
+
+    try {
+      const availableModels = await fetchAvailableGroqModels(key);
+      state.apiKey = key;
+      localStorage.setItem("instacopy_groq_key", key);
+
+      state.selectedModel = dom.modelSelect.value;
+      localStorage.setItem("instacopy_model", state.selectedModel);
+
+      state.autoFallback = dom.autoFallbackToggle.checked;
+      localStorage.setItem("instacopy_fallback", state.autoFallback);
+
+      updateKeyStatusDisplay();
+
+      let modelMsg = `Connected! Active model: ${state.selectedModel}.`;
+      if (availableModels.length > 0) {
+        updateModelDropdown(availableModels);
+        modelMsg += ` (${availableModels.length} models accessible)`;
+      }
+      showTestResult(modelMsg, true);
+      showToast("Groq Key Saved Permanently!");
+    } catch (err) {
+      showTestResult(`Verification failed: ${err.message}`, false);
+    } finally {
+      dom.saveKeyBtn.disabled = false;
+      dom.saveKeyBtn.textContent = "Save Key & Test";
+    }
+  });
+
+  dom.clearKeyBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to clear your stored Groq API key?")) {
+      state.apiKey = "";
+      localStorage.removeItem("instacopy_groq_key");
+      dom.apiKeyInput.value = "";
+      updateKeyStatusDisplay();
+      showTestResult("API Key removed from this device.", null);
+      showToast("Key cleared");
+    }
+  });
+
+  dom.autoFallbackToggle.addEventListener("change", (e) => {
+    state.autoFallback = e.target.checked;
+    localStorage.setItem("instacopy_fallback", state.autoFallback);
+  });
+
+  dom.modelSelect.addEventListener("change", (e) => {
+    state.selectedModel = e.target.value;
+    localStorage.setItem("instacopy_model", state.selectedModel);
+  });
+}
+
+function showTestResult(message, isSuccess) {
+  dom.keyTestResult.style.display = "block";
+  if (isSuccess === true) {
+    dom.keyTestResult.className = "status-box status-success";
+  } else if (isSuccess === false) {
+    dom.keyTestResult.className = "status-box status-error";
+  } else {
+    dom.keyTestResult.className = "status-box";
+  }
+  dom.keyTestResult.textContent = message;
+}
+
+async function fetchAvailableGroqModels(key) {
+  try {
+    const res = await fetch(GROQ_MODELS_URL, {
+      headers: {
+        "Authorization": `Bearer ${key.trim()}`,
+        "Content-Type": "application/json"
+      }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data && Array.isArray(data.data)) {
+      const activeModels = data.data
+        .filter(m => m.active !== false)
+        .map(m => m.id)
+        .filter(id => {
+          const lower = id.toLowerCase();
+          return !lower.includes("whisper") &&
+                 !lower.includes("tts") &&
+                 !lower.includes("guard") &&
+                 !lower.includes("embed") &&
+                 !lower.includes("mixtral-8x7b-32768");
+        });
+
+      // Priority sort: llama-3.1-8b-instant first, then llama-3.3-70b-versatile
+      activeModels.sort((a, b) => {
+        if (a === "llama-3.1-8b-instant") return -1;
+        if (b === "llama-3.1-8b-instant") return 1;
+        if (a === "llama-3.3-70b-versatile") return -1;
+        if (b === "llama-3.3-70b-versatile") return 1;
+        return a.localeCompare(b);
+      });
+
+      return activeModels.length > 0 ? activeModels : DEFAULT_MODELS;
+    }
+  } catch (e) {
+    console.warn("Could not fetch dynamic models list:", e);
+  }
+  return DEFAULT_MODELS;
+}
+
+function updateModelDropdown(modelsList) {
+  const currentVal = dom.modelSelect.value;
+  dom.modelSelect.innerHTML = "";
+  modelsList.forEach(id => {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = id === "llama-3.1-8b-instant" ? `${id} (Universal Free Access)` : id;
+    if (id === currentVal) opt.selected = true;
+    dom.modelSelect.appendChild(opt);
+  });
+}
+
+// --- Personalize & Guide Logic ---
+function setupPersonalizeUI() {
+  // Populate existing persona
+  dom.personaNiche.value = state.persona.niche || "";
+  dom.personaTone.value = state.persona.tone || "";
+  dom.personaAudience.value = state.persona.audience || "";
+  dom.personaRules.value = state.persona.rules || "";
+  updatePersonaActiveIndicator();
+
+  dom.savePersonaBtn.addEventListener("click", () => {
+    state.persona = {
+      niche: dom.personaNiche.value.trim(),
+      tone: dom.personaTone.value.trim(),
+      audience: dom.personaAudience.value.trim(),
+      rules: dom.personaRules.value.trim()
+    };
+    localStorage.setItem("instacopy_persona", JSON.stringify(state.persona));
+    updatePersonaActiveIndicator();
+    showToast("Brand Persona Saved!");
+  });
+
+  dom.clearPersonaBtn.addEventListener("click", () => {
+    if (confirm("Reset brand persona?")) {
+      state.persona = {};
+      localStorage.removeItem("instacopy_persona");
+      dom.personaNiche.value = "";
+      dom.personaTone.value = "";
+      dom.personaAudience.value = "";
+      dom.personaRules.value = "";
+      updatePersonaActiveIndicator();
+      showToast("Persona Reset");
+    }
+  });
+}
+
+function updatePersonaActiveIndicator() {
+  const hasPersona = Boolean(
+    state.persona.niche || state.persona.tone || state.persona.audience || state.persona.rules
+  );
+  dom.personaTag.style.display = hasPersona ? "inline-block" : "none";
+}
+
+function setupGuideAssistant() {
+  dom.guideChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      dom.guideInput.value = chip.dataset.query;
+      askGuideAssistant(chip.dataset.query);
+    });
+  });
+
+  dom.guideSendBtn.addEventListener("click", () => {
+    const q = dom.guideInput.value.trim();
+    if (q) askGuideAssistant(q);
+  });
+
+  dom.guideInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const q = dom.guideInput.value.trim();
+      if (q) askGuideAssistant(q);
+    }
+  });
+}
+
+async function askGuideAssistant(query) {
+  if (!ensureApiKey()) return;
+
+  dom.guideSendBtn.disabled = true;
+  dom.guideSendBtn.textContent = "Thinking...";
+  dom.guideResponseCard.style.display = "block";
+  dom.guideResponseText.textContent = "Formulating actionable copy advice...";
+
+  try {
+    let personaContext = "";
+    if (state.persona.niche) personaContext += `\nCreator Niche: ${state.persona.niche}`;
+    if (state.persona.tone) personaContext += `\nTone: ${state.persona.tone}`;
+    if (state.persona.audience) personaContext += `\nTarget Audience: ${state.persona.audience}`;
+
+    const prompt = `You are a world-class Instagram social media strategist and copywriting expert.
+Creator context:${personaContext || "General creator/business"}
+
+User question / request:
+"${query}"
+
+Rules:
+- Give punchy, highly actionable advice or formulas.
+- Sound human and sharp, not generic or fluff-filled.
+- No "In today's fast-paced world" or "Elevate your journey".
+- Never use the em-dash "—". Use colons, commas, or standard hyphens instead.
+- Keep it tight, practical, and ready to apply immediately on Instagram.`;
+
+    const response = await callGroqWithFallback([
+      { role: "system", content: "You are a top Instagram copywriting strategist." },
+      { role: "user", content: prompt }
+    ]);
+
+    dom.guideResponseText.textContent = cleanEmDashes(response);
+  } catch (err) {
+    dom.guideResponseText.textContent = `Error: ${err.message}`;
+  } finally {
+    dom.guideSendBtn.disabled = false;
+    dom.guideSendBtn.textContent = "Ask";
+  }
+}
+
+// --- File Handling & Client-Side Extraction (Saves Groq Limits) ---
+function setupFileUploadHandlers() {
+  dom.fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      await handleSelectedFile(file);
+    }
+  });
+
+  // Drag and drop
+  ["dragenter", "dragover"].forEach(eventName => {
+    dom.fileDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dom.fileDropzone.classList.add("dragover");
+    }, false);
+  });
+
+  ["dragleave", "drop"].forEach(eventName => {
+    dom.fileDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dom.fileDropzone.classList.remove("dragover");
+    }, false);
+  });
+
+  dom.fileDropzone.addEventListener("drop", async (e) => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleSelectedFile(e.dataTransfer.files[0]);
+    }
+  });
+
+  dom.removeFileBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    resetFileInput();
+  });
+
+  dom.extractedToggle.addEventListener("click", () => {
+    const isHidden = dom.extractedBody.style.display === "none";
+    dom.extractedBody.style.display = isHidden ? "block" : "none";
+    dom.extractedToggle.querySelector(".toggle-arrow").textContent = isHidden ? "▴" : "▾";
+  });
+
+  dom.extractedText.addEventListener("input", () => {
+    state.extractedText = dom.extractedText.value;
+    dom.extractedCharCount.textContent = state.extractedText.length;
+  });
+}
+
+function resetFileInput() {
+  state.currentFile = null;
+  state.extractedText = "";
+  dom.fileInput.value = "";
+  dom.dropzoneContent.style.display = "flex";
+  dom.fileBadge.style.display = "none";
+  dom.imagePreviewContainer.style.display = "none";
+  dom.imagePreview.src = "";
+  dom.extractedBox.style.display = "none";
+  dom.extractedText.value = "";
+  dom.extractedCharCount.textContent = "0";
+}
+
+async function handleSelectedFile(file) {
+  state.currentFile = file;
+  dom.dropzoneContent.style.display = "none";
+  dom.fileBadge.style.display = "flex";
+  dom.fileName.textContent = file.name;
+  dom.fileStatus.textContent = "Extracting text locally...";
+
+  const fileType = file.type;
+  const fileName = file.name.toLowerCase();
+
+  // Set file icon
+  if (fileType.startsWith("image/")) {
+    dom.fileIcon.textContent = "🖼️";
+    // Show image preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      dom.imagePreview.src = e.target.result;
+      dom.imagePreviewContainer.style.display = "flex";
+    };
+    reader.readAsDataURL(file);
+  } else if (fileName.endsWith(".pdf")) {
+    dom.fileIcon.textContent = "📑";
+    dom.imagePreviewContainer.style.display = "none";
+  } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")) {
+    dom.fileIcon.textContent = "📊";
+    dom.imagePreviewContainer.style.display = "none";
+  } else {
+    dom.fileIcon.textContent = "📄";
+    dom.imagePreviewContainer.style.display = "none";
+  }
+
+  // Pre-extract text directly in browser
+  try {
+    let extracted = "";
+    if (fileType.startsWith("image/")) {
+      extracted = await extractTextFromImage(file);
+    } else if (fileName.endsWith(".pdf")) {
+      extracted = await extractTextFromPDF(file);
+    } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls") || fileName.endsWith(".csv")) {
+      extracted = await extractTextFromExcel(file);
+    } else {
+      extracted = await file.text();
+    }
+
+    state.extractedText = extracted.trim();
+    dom.fileStatus.textContent = `Extracted (${state.extractedText.length} chars)`;
+    dom.fileStatus.style.color = "var(--accent-green)";
+
+    // Show extracted drawer
+    dom.extractedBox.style.display = "block";
+    dom.extractedText.value = state.extractedText;
+    dom.extractedCharCount.textContent = state.extractedText.length;
+    showToast("Text extracted locally (zero Groq token waste)!");
+  } catch (err) {
+    console.error("Extraction error:", err);
+    dom.fileStatus.textContent = "Could not extract text";
+    dom.fileStatus.style.color = "var(--danger-color)";
+    showToast("Could not auto-extract text from file");
+  }
+}
+
+// 1. Tesseract OCR for Images
+async function extractTextFromImage(file) {
+  dom.fileStatus.textContent = "Running OCR scan...";
+  if (typeof Tesseract === "undefined") {
+    throw new Error("OCR engine not loaded");
+  }
+  const result = await Tesseract.recognize(file, "eng", {
+    logger: (m) => {
+      if (m.status === "recognizing text") {
+        const pct = Math.round((m.progress || 0) * 100);
+        dom.fileStatus.textContent = `OCR Scanning: ${pct}%`;
+      }
+    }
+  });
+  return result.data.text || "";
+}
+
+// 2. PDF.js for PDF Documents
+async function extractTextFromPDF(file) {
+  dom.fileStatus.textContent = "Reading PDF pages...";
+  if (typeof pdfjsLib === "undefined") {
+    throw new Error("PDF parser not loaded");
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = "";
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strings = content.items.map(item => item.str);
+    fullText += `--- Page ${i} ---\n` + strings.join(" ") + "\n\n";
+  }
+  return fullText;
+}
+
+// 3. SheetJS for Excel & CSV
+async function extractTextFromExcel(file) {
+  dom.fileStatus.textContent = "Parsing spreadsheet...";
+  if (typeof XLSX === "undefined") {
+    throw new Error("Excel parser not loaded");
+  }
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  let fullText = "";
+
+  workbook.SheetNames.forEach(sheetName => {
+    const worksheet = workbook.Sheets[sheetName];
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    if (csv.trim()) {
+      fullText += `--- Sheet: ${sheetName} ---\n${csv}\n\n`;
+    }
+  });
+  return fullText;
+}
+
+// --- Tone Chips ---
+function setupToneChips() {
+  dom.toneChips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      dom.toneChips.forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      dom.postTone.value = chip.dataset.tone;
+    });
+  });
+}
+
+// --- Generator Events & Groq Call ---
+function setupGeneratorEvents() {
+  dom.generateBtn.addEventListener("click", async () => {
+    await handleGenerate();
+  });
+}
+
+function ensureApiKey() {
+  if (!state.apiKey.trim()) {
+    showError("Please enter your Groq API key first.");
+    switchTab("settings");
+    dom.apiKeyInput.focus();
+    return false;
+  }
+  return true;
+}
+
+function showError(msg) {
+  dom.errorMsg.style.display = "block";
+  dom.errorMsg.textContent = msg;
+}
+
+function clearError() {
+  dom.errorMsg.style.display = "none";
+  dom.errorMsg.textContent = "";
+}
+
+async function handleGenerate() {
+  clearError();
+  if (!ensureApiKey()) return;
+
+  const topicText = dom.postTopic.value.trim();
+  const fileExtracted = dom.extractedText.value.trim() || state.extractedText.trim();
+
+  // FLEXIBLE INPUT FIX: Either text, or file, or both!
+  if (!topicText && !fileExtracted) {
+    showError("Please enter a topic/text OR upload an image/file (either works!)");
+    dom.postTopic.focus();
+    return;
+  }
+
+  // Combine inputs cleanly
+  let combinedInput = "";
+  if (topicText && fileExtracted) {
+    combinedInput = `User Topic/Context:\n${topicText}\n\nExtracted File Content:\n${fileExtracted}`;
+  } else if (topicText) {
+    combinedInput = topicText;
+  } else {
+    combinedInput = fileExtracted;
+  }
+
+  // Build Tone / Niche instructions
+  let toneInstruction = dom.postTone.value.trim();
+  if (!toneInstruction && state.persona.tone) {
+    toneInstruction = state.persona.tone;
+  }
+
+  // UI loading state
+  setLoading(true, "Preparing prompt...", 25);
+
+  try {
+    const prompt = buildCopywritingPrompt(combinedInput, toneInstruction);
+
+    setLoading(true, `Contacting Groq (${state.selectedModel})...`, 60);
+
+    const responseText = await callGroqWithFallback([
+      {
+        role: "system",
+        content: `You are an elite, top-performing Instagram copywriter and social media strategist.
+You write sharp, punchy, human-sounding Instagram content.
+Rules:
+- Strictly sound human, not like AI.
+- No generic AI-sounding phrases ("In today's fast-paced world...", "Elevate your journey...", "Unleash your potential", excessive emoji strings).
+- Strictly NEVER use this symbol: "—" (em-dash). Use colons, commas, or standard hyphens instead.
+- Do not invent or fabricate facts, numbers, or stats not present in the input. Leave placeholders like [insert price] instead.
+- Output MUST strictly be valid JSON following the schema requested.`
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ]);
+
+    setLoading(true, "Formatting your copy...", 90);
+
+    const parsedOutput = parseGroqResponse(responseText);
+    renderResults(parsedOutput);
+
+    setLoading(false);
+    dom.resultsContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+    showToast("🎉 Generated successfully!");
+  } catch (err) {
+    setLoading(false);
+    console.error("Generation failed:", err);
+    showError(`Generation error: ${err.message}`);
+  }
+}
+
+function buildCopywritingPrompt(rawInput, tone) {
+  let personaRules = "";
+  if (state.persona.niche) personaRules += `\nCreator Niche: ${state.persona.niche}`;
+  if (state.persona.audience) personaRules += `\nTarget Audience: ${state.persona.audience}`;
+  if (state.persona.rules) personaRules += `\nSpecial Creator Rules: ${state.persona.rules}`;
+
+  return `Here is the post material/extracted content:
+"""
+${rawInput}
+"""
+
+Tone/Niche preference: ${tone || "Make a smart, natural guess based on the content"}
+${personaRules}
+
+Create everything needed to publish on Instagram from this ONE input.
+You must output a single JSON object with EXACTLY these 4 keys:
+
+{
+  "captions": [
+    "Option 1: [Start with a strong, curiosity-driven or bold hook on the first line]. [Engaging, readable body with clean line breaks]. [Clear call to action]",
+    "Option 2: [Start with a story, relatable angle, or counter-intuitive hook]. [Body]. [CTA]",
+    "Option 3: [Start with a short, punchy, high-impact hook]. [Body]. [CTA]"
+  ],
+  "hashtags": "15 to 20 hashtags formatted with # symbols, separated by spaces. Must be a strategic mix of high-volume broad tags and specific niche tags.",
+  "seo_words": "5 to 8 natural, keyword-rich search terms (comma-separated) optimized for the Instagram search algorithm.",
+  "pinned_comment": "A short, engaging comment to post immediately after publishing to spark discussions or drive interactions."
+}
+
+CRITICAL RULES:
+1. Every caption MUST start with a scroll-stopping hook on line 1.
+2. Absolutely DO NOT use the em-dash "—" anywhere in the content.
+3. Sound human, confident, and conversational. No robotic AI fluff or cliché phrases.
+4. Do not make up facts or statistics not in the input.
+5. Return ONLY the raw JSON object.`;
+}
+
+// --- Groq API Call with Auto-Fallback ---
+async function callGroqWithFallback(messages) {
+  // Clear any legacy decommissioned models from state
+  if (state.selectedModel.includes("mixtral") || state.selectedModel.includes("llama3-")) {
+    state.selectedModel = "llama-3.1-8b-instant";
+    localStorage.setItem("instacopy_model", state.selectedModel);
+    if (dom.modelSelect) dom.modelSelect.value = state.selectedModel;
+  }
+
+  const modelsToTry = [state.selectedModel];
+
+  if (state.autoFallback) {
+    DEFAULT_MODELS.forEach(m => {
+      if (!modelsToTry.includes(m)) modelsToTry.push(m);
+    });
+  }
+
+  let lastError = null;
+
+  for (let i = 0; i < modelsToTry.length; i++) {
+    const model = modelsToTry[i];
+    try {
+      if (i > 0) {
+        setLoading(true, `Retrying with model ${model}...`, 75);
+      }
+
+      const res = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${state.apiKey.trim()}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 2048,
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const errMsg = errorData.error?.message || `HTTP ${res.status}`;
+        const errMsgLower = errMsg.toLowerCase();
+
+        // Check if it's a 400, 404, or model error
+        const isModelError =
+          res.status === 404 ||
+          res.status === 400 ||
+          errMsgLower.includes("does not exist") ||
+          errMsgLower.includes("access to it") ||
+          errMsgLower.includes("decommissioned") ||
+          errMsgLower.includes("deprecated") ||
+          errMsgLower.includes("model");
+
+        if (isModelError && state.autoFallback) {
+          console.warn(`Model ${model} failed with: ${errMsg}. Trying next model...`);
+          lastError = new Error(`Model ${model} failed: ${errMsg}`);
+
+          // If there are more models queued, try the next one
+          if (i < modelsToTry.length - 1) {
+            continue;
+          }
+
+          // If we reached the end of the queue, discover live active models from Groq
+          try {
+            const liveModels = await fetchAvailableGroqModels(state.apiKey);
+            const untried = liveModels.filter(m => !modelsToTry.includes(m));
+            if (untried.length > 0) {
+              console.log(`Discovered ${untried.length} active models from Groq:`, untried);
+              modelsToTry.push(...untried);
+              continue;
+            }
+          } catch (e) {
+            console.warn("Could not query extra models:", e);
+          }
+        }
+
+        throw new Error(`Groq API error (${res.status}): ${errMsg}`);
+      }
+
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Empty response received from Groq API.");
+
+      // If we used a fallback model successfully, update the current model
+      if (model !== state.selectedModel) {
+        state.selectedModel = model;
+        localStorage.setItem("instacopy_model", model);
+        if (dom.modelSelect) dom.modelSelect.value = model;
+        console.log(`Auto-switched active model to ${model}`);
+      }
+
+      return content;
+    } catch (err) {
+      lastError = err;
+      if (state.autoFallback && i < modelsToTry.length - 1) {
+        continue;
+      }
+      break;
+    }
+  }
+
+  throw lastError || new Error("Failed to contact Groq API after trying fallback models.");
+}
+
+// --- Response Parser & Sanitizer ---
+function cleanEmDashes(text) {
+  if (!text) return "";
+  // Strip em-dash and en-dash completely per strict user instruction
+  return text.replace(/—/g, " - ").replace(/–/g, " - ");
+}
+
+function parseGroqResponse(responseText) {
+  let cleaned = cleanEmDashes(responseText.trim());
+
+  // Extract JSON if wrapped in markdown code blocks
+  if (cleaned.startsWith("```json")) {
+    cleaned = cleaned.replace(/^```json/, "").replace(/```$/, "").trim();
+  } else if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```/, "").replace(/```$/, "").trim();
+  }
+
+  try {
+    const data = JSON.parse(cleaned);
+    return {
+      captions: Array.isArray(data.captions) ? data.captions : [data.caption || cleaned],
+      hashtags: data.hashtags || "",
+      seo_words: data.seo_words || "",
+      pinned_comment: data.pinned_comment || ""
+    };
+  } catch (e) {
+    console.warn("Could not parse strict JSON, formatting raw text:", e);
+    return parsePlainTextFallback(cleaned);
+  }
+}
+
+function parsePlainTextFallback(rawText) {
+  // Fallback parser in case Groq returns labeled plain text
+  return {
+    captions: [
+      rawText.split("Hashtags:")[0] || rawText,
+      "Option 2 fallback",
+      "Option 3 fallback"
+    ],
+    hashtags: "#instagram #contentcreator",
+    seo_words: "instagram content, viral captions",
+    pinned_comment: "Let me know your thoughts in the comments below!"
+  };
+}
+
+// --- Results Rendering ---
+function renderResults(data) {
+  dom.caption1.textContent = cleanEmDashes(data.captions[0] || "No caption generated.");
+  dom.caption2.textContent = cleanEmDashes(data.captions[1] || "No caption generated.");
+  dom.caption3.textContent = cleanEmDashes(data.captions[2] || "No caption generated.");
+
+  dom.hashtagsText.textContent = cleanEmDashes(data.hashtags || "");
+  dom.seoText.textContent = cleanEmDashes(data.seo_words || "");
+  dom.pinnedComment.textContent = cleanEmDashes(data.pinned_comment || "");
+
+  dom.resultsContainer.style.display = "block";
+}
+
+// --- Copy & Clipboard Handlers ---
+function setupCopyButtons() {
+  document.querySelectorAll(".btn-copy-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.copyTarget;
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        copyToClipboard(targetEl.textContent || targetEl.innerText);
+        animateButtonCopied(btn);
+      }
+    });
+  });
+
+  dom.copyAllBtn.addEventListener("click", () => {
+    const c1 = dom.caption1.textContent;
+    const c2 = dom.caption2.textContent;
+    const c3 = dom.caption3.textContent;
+    const tags = dom.hashtagsText.textContent;
+    const seo = dom.seoText.textContent;
+    const pinned = dom.pinnedComment.textContent;
+
+    const fullContent = `--- CAPTION OPTION 1 ---
+${c1}
+
+--- CAPTION OPTION 2 ---
+${c2}
+
+--- CAPTION OPTION 3 ---
+${c3}
+
+--- HASHTAGS ---
+${tags}
+
+--- SEO KEYWORDS ---
+${seo}
+
+--- PINNED COMMENT ---
+${pinned}`;
+
+    copyToClipboard(fullContent);
+    animateButtonCopied(dom.copyAllBtn, "📋 Copied All!");
+  });
+}
+
+function copyToClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("Copied to clipboard!");
+      triggerHaptic();
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand("copy");
+    showToast("Copied to clipboard!");
+    triggerHaptic();
+  } catch (err) {
+    console.error("Fallback copy failed:", err);
+  }
+  document.body.removeChild(textArea);
+}
+
+function animateButtonCopied(buttonEl, customText) {
+  const originalHtml = buttonEl.innerHTML;
+  buttonEl.textContent = customText || "✓ Copied!";
+  buttonEl.style.background = "var(--accent-green)";
+  buttonEl.style.color = "#ffffff";
+  setTimeout(() => {
+    buttonEl.innerHTML = originalHtml;
+    buttonEl.style.background = "";
+    buttonEl.style.color = "";
+  }, 1800);
+}
+
+function triggerHaptic() {
+  if (navigator.vibrate) {
+    navigator.vibrate(30);
+  }
+}
+
+function showToast(message) {
+  dom.toast.textContent = message;
+  dom.toast.classList.add("show");
+  setTimeout(() => {
+    dom.toast.classList.remove("show");
+  }, 2200);
+}
+
+function setLoading(isLoading, statusText = "", progressPct = 0) {
+  if (isLoading) {
+    dom.loadingCard.style.display = "block";
+    dom.loadingStatus.textContent = statusText;
+    dom.progressBar.style.width = `${progressPct}%`;
+    dom.generateBtn.disabled = true;
+  } else {
+    dom.loadingCard.style.display = "none";
+    dom.generateBtn.disabled = false;
+  }
+}
+
+</script>
+</body>
+</html>
